@@ -32,7 +32,7 @@ from scipy.sparse.linalg import inv, spsolve, bicgstab
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # # Settings # # # # # # # # # # # # #
-drive = "D:"
+drive = "E:"
 # # # # # # # # # # # # # # # # # # #
 
 
@@ -153,6 +153,9 @@ class EXPERIMENT:
         self.d = d
         self.code = code
         self.ep = ep
+
+    def __str__(self):
+        return self.c+" "+str(self.y)+" / "+str(self.d)+" "+self.code+" : "+str(self.ep)
 
 
 class SETTING:
@@ -298,7 +301,7 @@ class SETTING:
                 simple_a1l.append(self.a1l[il])
 
         simprize_prob = SETTING(self.a1h, np.array(
-            simple_a1b), np.array(simple_a1l), self.cof, self.alpha)
+            simple_a1b), np.array(simple_a1l), self.cof, 0.3)
         return simprize_prob
 
     def extension(self, simple, X) -> np.ndarray:
@@ -341,8 +344,8 @@ def ImportDataFromTomoI(exp: EXPERIMENT) -> INPUT:
     day = exp.d
     ep = exp.ep
 
-    Tomography_input = "D:/tomoi/{c}/{y:04d}/{d:03d}/{code}/{ep:04d}.tomoi".format(
-        c=country, y=year4, d=day, code="_______________", ep=ep)
+    Tomography_input = "{dr}/tomoi/{c}/{y:04d}/{d:03d}/{code}/{ep:04d}.tomoi".format(
+        dr=drive, c=country, y=year4, d=day, code="_______________", ep=ep)
 
     data = []
     recs = []
@@ -369,7 +372,7 @@ def ImportDataFromTomoI(exp: EXPERIMENT) -> INPUT:
 # # Calculation C # # # # # # # # # # #
 
 
-def Generate_C(exp: EXPERIMENT, Input: INPUT, setting: SETTING) -> csr_matrix:
+def Generate_C(exp: EXPERIMENT, Input: INPUT, setting: SETTING, write=True) -> csr_matrix:
 
     country = exp.c
     year4 = exp.y
@@ -392,15 +395,21 @@ def Generate_C(exp: EXPERIMENT, Input: INPUT, setting: SETTING) -> csr_matrix:
         dr=drive, c=country, y=year4, d=day, code=code, epc=ep)
 
     A = lil_matrix((n_obs, n_all))
-
-    with open(Tomography_C, "w") as f:
-        print(n_obs, n_all, file=f)
+    if write:
+        with open(Tomography_C, "w") as f:
+            print(n_obs, n_all, file=f)
+            for iobs in tqdm(range(n_obs)):
+                A_idx, A_data = Generate_C_row(
+                    lsat[iobs], lrec[iobs], setting)
+                for jidx in range(len(A_idx)):
+                    A[iobs, A_idx[jidx]] = A_data[jidx]
+                    print(iobs, A_idx[jidx], A_data[jidx], file=f)
+    else:
         for iobs in tqdm(range(n_obs)):
             A_idx, A_data = Generate_C_row(
                 lsat[iobs], lrec[iobs], setting)
             for jidx in range(len(A_idx)):
                 A[iobs, A_idx[jidx]] = A_data[jidx]
-                print(iobs, A_idx[jidx], A_data[jidx], file=f)
 
     return csr_matrix(A)
 
@@ -743,12 +752,11 @@ def Generate_Y(exp: EXPERIMENT, setting: SETTING):
 
 
 def Tomography(A: csr_matrix, B: np.ndarray, H: csr_matrix, Y: np.ndarray, co: float, x_0: np.ndarray, First: bool) -> np.ndarray:
-
     if First:
         X = spsolve(A.T*A+co*co*H.T*H, A.T*B+co*co*H.T*Y)
     else:
         X, info = bicgstab(A.T*A+co*co*H.T*H, A.T*B+co*co *
-                           H.T*Y, x0=x_0, tol=1.0e-6, maxiter=1000)
+                           H.T*Y, x0=x_0, tol=1.0e-7, maxiter=5000)
 
     return X
 
@@ -764,11 +772,11 @@ def Write_B(B, exp: EXPERIMENT):
     day = exp.d
     ep = exp.ep
 
-    os.makedirs("D:/tomob/{c}/{y:04d}/{d:03d}/{code}".format(
-        c=country, y=year4, d=day, ep=ep, code="_______________"
+    os.makedirs("{dr}/tomob/{c}/{y:04d}/{d:03d}/{code}".format(
+        dr=drive, c=country, y=year4, d=day, ep=ep, code="_______________"
     ), exist_ok=True)
-    tomob = "D:/tomob/{c}/{y:04d}/{d:03d}/{code}/{ep:04d}.tomob".format(
-        c=country, y=year4, d=day, ep=ep, code="_______________"
+    tomob = "{dr}/tomob/{c}/{y:04d}/{d:03d}/{code}/{ep:04d}.tomob".format(
+        dr=drive, c=country, y=year4, d=day, ep=ep, code="_______________"
     )
 
     with open(tomob, "w") as bf:
@@ -919,9 +927,13 @@ def Read_X(exp: EXPERIMENT) -> np.ndarray:
 
 
 def Setting_Process(exp: EXPERIMENT, setting: SETTING):
+
     Input = ImportDataFromTomoI(exp)
+
     lil_A = Generate_C(exp, Input, setting)
+
     B = Del_Plasmaphic(exp, Input, setting)
+
     Write_B(B, exp)
 
 
@@ -937,11 +949,13 @@ def Solve_First_Epoch(exp: EXPERIMENT, setting: SETTING):
     cof = setting.cof
 
     if n_all < 30000:
+
         # Solve Original
         csr_A = Read_A(exp)
         nd_B = Read_B(exp)
         csr_H = setting.H
         nd_Y = Generate_Y(exp, setting)
+
         co = float(csr_matrix.trace(csr_A.T*csr_A)/setting.trH_2)
 
         X = Tomography(csr_A, nd_B, csr_H, nd_Y,
@@ -954,21 +968,23 @@ def Solve_First_Epoch(exp: EXPERIMENT, setting: SETTING):
         OutPut(X, op_file, ep, setting)
 
     else:
+
         # Solve Simprize Problem
-        N_b = 20
-        N_l = 20
+        N_b = 35
+        N_l = 35
         simple_setting = setting.simprize(N_b, N_l)
+
         Input = ImportDataFromTomoI(exp)
-        csr_A = Generate_C(exp, Input, simple_setting)
-        nd_B = Read_B(exp)
-        csr_H = Generate_H(simple_setting)
-        nd_Y = Generate_Y(exp, simple_setting)
+        scsr_A = Generate_C(exp, Input, simple_setting, write=False)
+        snd_B = Read_B(exp)
+        scsr_H = Generate_H(simple_setting)
+        snd_Y = Generate_Y(exp, simple_setting)
 
-        co = float(csr_matrix.trace(csr_A.T*csr_A) /
-                   csr_matrix.trace(csr_H.T*csr_H))
+        sco = float(csr_matrix.trace(scsr_A.T*scsr_A) /
+                    csr_matrix.trace(scsr_H.T*scsr_H))
 
-        X = Tomography(csr_A, nd_B, csr_H, nd_Y,
-                       cof*co, x_0=np.nan, First=True)
+        X = Tomography(scsr_A, snd_B, scsr_H, snd_Y,
+                       cof*sco, x_0=np.nan, First=True)
 
         X_0 = setting.extension(simple_setting, X)
 
@@ -984,6 +1000,8 @@ def Solve_First_Epoch(exp: EXPERIMENT, setting: SETTING):
             dr=drive, c=country, y=year4, d=day, code=code), exist_ok=True)
         op_file = "{dr}/tomo/{c}/{y:04}/{d:03}/{code}/{epc:04d}.tomo".format(
             dr=drive, c=country, y=year4, d=day, code=code, epc=ep)
+
+        OutPut(X, op_file, ep, setting)
 
 
 def Solving_Process(exp: EXPERIMENT, setting: SETTING, eps, idx):
@@ -1001,9 +1019,12 @@ def Solving_Process(exp: EXPERIMENT, setting: SETTING, eps, idx):
     csr_H = setting.H
     nd_Y = Generate_Y(exp, setting)
     co = float(csr_matrix.trace(csr_A.T*csr_A)/setting.trH_2)
+
     latest = max(0, idx-3)
     exp_latest = EXPERIMENT(country, year4, day, code, eps[latest])
+
     X_0 = Read_X(exp_latest)
+
     X = Tomography(csr_A, nd_B, csr_H, nd_Y, cof*co, X_0, First=False)
 
     os.makedirs("{dr}/tomo/{c}/{y:04}/{d:03}/{code}".format(
@@ -1011,6 +1032,8 @@ def Solving_Process(exp: EXPERIMENT, setting: SETTING, eps, idx):
     op_file = "{dr}/tomo/{c}/{y:04}/{d:03}/{code}/{epc:04d}.tomo".format(
         dr=drive, c=country, y=year4, d=day, code=code, epc=ep)
     OutPut(X, op_file, ep, setting)
+
+    print(exp, "end")
 
 
 # Main
@@ -1032,11 +1055,12 @@ def __Tomography__(country: str, year4: int, day: int, CODE: str, eps: np.ndarra
     csr_H = Generate_H(setting)
     setting.__initH__(csr_H)
 
+    # 131 x 122 x 26 -> 13 sec
     print("** Common Setting Complete **", time.time()-start)
 
-    with ProcessPoolExecutor(max_worker=M_w) as executor:
+    with ProcessPoolExecutor(max_workers=M_w) as executor:
         futures = [executor.submit(Setting_Process, exp, setting)
-                   for exp in tqdm(exps)]
+                   for exp in exps]
 
     print("** Formula Setting Complete **", time.time()-start)
 
@@ -1054,28 +1078,37 @@ def __Tomography__(country: str, year4: int, day: int, CODE: str, eps: np.ndarra
 if __name__ == "__main__":
     country = "jp"
     year4 = 2016
-    day = 107
-    CODE = "____"
-    eps = np.arange(10)
+    day = 193
+    CODE = "MSTID_1+2_05d_3_2_0_8-1"
+    eps = np.arange(1600, 2000, 1)
+    # n_h = 26
     a1h = np.array([070.0, 100.0, 130.0, 160.0, 190.0, 220.0, 250.0, 280.0, 310.0, 340.0,
                     370.0, 400.0, 430.0, 460.0, 490.0, 520.0, 550.0, 580.0, 610.0, 660.0,
                     710.0, 760.0, 810.0, 860.0, 910.0, 960.0, 1010.0])
-    a1l = np.array([095.0, 105.0, 115.0, 120.0, 123.0, 125.0, 125.8, 126.6, 127.4, 128.2,
-                    129.0, 129.8, 130.6, 131.4, 132.2, 133.0, 133.8, 134.6, 135.4, 136.2,
-                    137.0, 137.8, 138.6, 139.4, 140.2, 141.0, 141.8, 142.6, 143.4, 144.2,
-                    145.0, 145.8, 146.6, 147.4, 148.2, 149.0, 151.0, 154.0, 159.0, 169.0, 179.0])
-    a1b = np.array([-5.0, 05.0, 15.0, 20.0, 23.0, 25.0, 25.8, 26.6, 27.4, 28.2,
-                    29.0, 29.8, 30.6, 31.4, 32.2, 33.0, 33.8, 34.6, 35.4, 36.2,
-                    37.0, 37.8, 38.6, 39.4, 40.2, 41.0, 41.8, 42.6, 43.4, 44.2,
-                    45.0, 45.8, 46.6, 47.4, 48.2, 49.0, 51.0, 54.0, 59.0, 69.0, 79.0])
-    setting = SETTING(a1h=a1h, a1b=a1b, a1l=a1l, cof=1.0e+1, alpha=0.3)
-    simple_setting = setting.simprize(10, 10)
-    print(setting.a1b)
-    print(setting.a1l)
-    print(simple_setting.a1b)
-    print(simple_setting.a1l)
-    X = np.arange(0, 26*10*10, 1)
-    X_0 = setting.extension(simple_setting, X)
-    for i in range(0, 10, 1):
-        print(i, ":", X_0[i])
-    # __Tomography__(country, year4, day, CODE, eps, setting)
+    # n_l = 99
+    a1l = np.array([095.00, 097.50, 100.00, 102.50, 105.00, 106.00, 107.00, 108.00, 109.00,
+                    110.00, 111.00, 112.00, 113.00, 114.00, 115.00, 116.00, 117.00, 118.00, 119.00,
+                    120.00, 120.50, 121.00, 121.50, 122.00, 122.50, 123.00, 123.50, 124.00, 124.50,
+                    125.00, 125.50, 126.00, 126.50, 127.00, 127.50, 128.00, 128.50, 129.00, 129.50,
+                    130.00, 130.50, 131.00, 131.50, 132.00, 132.50, 133.00, 133.50, 134.00, 134.50,
+                    135.00, 135.50, 136.00, 136.50, 137.00, 137.50, 138.00, 138.50, 139.00, 139.50,
+                    140.00, 140.50, 141.00, 141.50, 142.00, 142.50, 143.00, 143.50, 144.00, 144.50,
+                    145.00, 145.50, 146.00, 146.50, 147.00, 147.50, 148.00, 148.50, 149.00, 149.50,
+                    150.00, 151.00, 152.00, 153.00, 154.00, 155.00, 156.00, 157.00, 158.00, 159.00,
+                    160.00, 161.00, 162.00, 163.00, 164.00, 165.00, 167.50, 170.00, 172.50, 175.00,
+                    177.50])
+    # n_b = 100
+    a1b = np.array([-5.00, -2.50, 00.00, 02.50, 05.00, 06.00, 07.00, 08.00, 09.00, 10.00,
+                    11.00, 12.00, 13.00, 14.00, 15.00, 16.00, 17.00, 18.00, 19.00, 20.00,
+                    20.50, 21.00, 21.50, 22.00, 22.50, 23.00, 23.50, 24.00, 24.50, 25.00,
+                    25.50, 26.00, 26.50, 27.00, 27.50, 28.00, 28.50, 29.00, 29.50, 30.00,
+                    30.50, 31.00, 31.50, 32.00, 32.50, 33.00, 33.50, 34.00, 34.50, 35.00,
+                    35.50, 36.00, 36.50, 37.00, 37.50, 38.00, 38.50, 39.00, 39.50, 40.00,
+                    40.50, 41.00, 41.50, 42.00, 42.50, 43.00, 43.50, 44.00, 44.50, 45.00,
+                    45.50, 46.00, 46.50, 47.00, 47.50, 48.00, 48.50, 49.00, 49.50, 50.00,
+                    51.00, 52.00, 53.00, 54.00, 55.00, 56.00, 57.00, 58.00, 59.00, 60.00,
+                    61.00, 62.00, 63.00, 64.00, 65.00, 67.50, 70.00, 72.50, 75.00, 77.50,
+                    80.00])
+    setting = SETTING(a1h=a1h, a1b=a1b, a1l=a1l, cof=1.0e+2, alpha=0.8)
+
+    __Tomography__(country, year4, day, CODE, eps, setting, 2)
