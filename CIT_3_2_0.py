@@ -38,10 +38,10 @@ drive = "E:"
 
 # CONSTANT
 
-rf = 1.0/298.257223563
+rf = 1.0 / 298.257223563
 ra = 6378.1370
-rb = ra*(1.0-rf)
-re = math.sqrt((ra*ra-rb*rb)/(ra*ra))
+rb = ra * (1.0 - rf)
+re = math.sqrt((ra * ra - rb * rb) / (ra * ra))
 
 # BASIC CLASS
 
@@ -52,9 +52,9 @@ def lnearst_idx(lst: list, d: float):
         return -1
     for i in range(L):
         if lst[i] > d:
-            return i-1
-        if i == L-1:
-            return L-1
+            return i - 1
+        if i == L - 1:
+            return L - 1
 
 
 class BLH:
@@ -71,21 +71,30 @@ class BLH:
 
     def to_XYZ(self):
         answer = XYZ(0.0, 0.0, 0.0)
-        n = ra/math.sqrt(1.0-re*re*math.sin(math.radians(self.b))
-                         * math.sin(math.radians(self.b)))
-        answer.x = (n+self.h)*math.cos(math.radians(self.b)) * \
-            math.cos(math.radians(self.l))
-        answer.y = (n+self.h)*math.cos(math.radians(self.b)) * \
-            math.sin(math.radians(self.l))
-        answer.z = ((1-re*re)*n+self.h)*math.sin(math.radians(self.b))
+        n = ra / math.sqrt(
+            1.0
+            - re * re * math.sin(math.radians(self.b)) * math.sin(math.radians(self.b))
+        )
+        answer.x = (
+            (n + self.h)
+            * math.cos(math.radians(self.b))
+            * math.cos(math.radians(self.l))
+        )
+        answer.y = (
+            (n + self.h)
+            * math.cos(math.radians(self.b))
+            * math.sin(math.radians(self.l))
+        )
+        answer.z = ((1 - re * re) * n + self.h) * math.sin(math.radians(self.b))
         return answer
 
     def __str__(self):
-        return "[ B: "+str(self.b)+" L: "+str(self.l)+" H: "+str(self.h)+" ]"
+        return (
+            "[ B: " + str(self.b) + " L: " + str(self.l) + " H: " + str(self.h) + " ]"
+        )
 
 
 class XYZ:
-
     # x,y,z...[km]
     x: float = 0.0
     y: float = 0.0
@@ -102,41 +111,52 @@ class XYZ:
         Z = float(self.z)
         answer = BLH(0.0, 0.0, 0.0)
         # 1
-        p = math.sqrt(X*X+Y*Y)
-        h = ra*ra-rb*rb
-        t = math.atan2(Z*ra, p*rb)  # rad
+        p = math.sqrt(X * X + Y * Y)
+        h = ra * ra - rb * rb
+        t = math.atan2(Z * ra, p * rb)  # rad
         answer.l = math.degrees(math.atan2(Y, X))  # deg
         # 2
-        answer.b = math.degrees(math.atan2(
-            (ra*rb*Z+ra*h*math.sin(t)**3), (ra*rb*p-rb*h*math.cos(t)**3)))  # deg
+        answer.b = math.degrees(
+            math.atan2(
+                (ra * rb * Z + ra * h * math.sin(t) ** 3),
+                (ra * rb * p - rb * h * math.cos(t) ** 3),
+            )
+        )  # deg
         # 3
-        n = ra/math.sqrt(1-re*re*math.sin(math.radians(answer.b))
-                         * math.sin(math.radians(answer.b)))
+        n = ra / math.sqrt(
+            1
+            - re
+            * re
+            * math.sin(math.radians(answer.b))
+            * math.sin(math.radians(answer.b))
+        )
         # 4
-        answer.h = p/math.cos(math.radians(answer.b))-n
+        answer.h = p / math.cos(math.radians(answer.b)) - n
         return answer
 
     def __str__(self):
-        return "[ X: "+str(self.x)+" Y: "+str(self.y)+" Z: "+str(self.z)+" ]"
+        return (
+            "[ X: " + str(self.x) + " Y: " + str(self.y) + " Z: " + str(self.z) + " ]"
+        )
 
     def __add__(self, other):
-        spo = XYZ(self.x+other.x, self.y+other.y, self.z+other.z)
+        spo = XYZ(self.x + other.x, self.y + other.y, self.z + other.z)
         return spo
 
     def __sub__(self, other):
-        smo = XYZ(self.x-other.x, self.y-other.y, self.z-other.z)
+        smo = XYZ(self.x - other.x, self.y - other.y, self.z - other.z)
         return smo
 
     def __mul__(self, other):
-        sto = XYZ(self.x*other, self.y*other, self.z*other)
+        sto = XYZ(self.x * other, self.y * other, self.z * other)
         return sto
 
     def __rmul__(self, other):
-        sto = XYZ(self.x*other, self.y*other, self.z*other)
+        sto = XYZ(self.x * other, self.y * other, self.z * other)
         return sto
 
     def L2(self) -> float:
-        siz = self.x**2+self.y**2+self.z**2
+        siz = self.x**2 + self.y**2 + self.z**2
         return math.sqrt(siz)
 
 
@@ -155,7 +175,17 @@ class EXPERIMENT:
         self.ep = ep
 
     def __str__(self):
-        return self.c+" "+str(self.y)+" / "+str(self.d)+" "+self.code+" : "+str(self.ep)
+        return (
+            self.c
+            + " "
+            + str(self.y)
+            + " / "
+            + str(self.d)
+            + " "
+            + self.code
+            + " : "
+            + str(self.ep)
+        )
 
 
 class SETTING:
@@ -170,7 +200,7 @@ class SETTING:
     n_b: int = 0
     n_l: int = 0
     n_all: int = 0
-    cof: float = 1.0e+1
+    cof: float = 1.0e1
     alpha: float = 0.3
 
     m_H: float = 0.0
@@ -190,20 +220,20 @@ class SETTING:
         self.cof = cof
         self.alpha = alpha
 
-        self.n_h = a1h.shape[0]-1
-        self.n_b = a1b.shape[0]-1
-        self.n_l = a1l.shape[0]-1
-        self.n_all = self.n_h*self.n_b*self.n_l
+        self.n_h = a1h.shape[0] - 1
+        self.n_b = a1b.shape[0] - 1
+        self.n_l = a1l.shape[0] - 1
+        self.n_all = self.n_h * self.n_b * self.n_l
 
         self.a2h = np.full((self.n_h), 0.0, dtype=float)
         self.a2b = np.full((self.n_b), 0.0, dtype=float)
         self.a2l = np.full((self.n_l), 0.0, dtype=float)
         for ih in range(self.n_h):
-            self.a2h[ih] = 0.5*(self.a1h[ih]+self.a1h[ih+1])
+            self.a2h[ih] = 0.5 * (self.a1h[ih] + self.a1h[ih + 1])
         for ib in range(self.n_b):
-            self.a2b[ib] = 0.5*(self.a1b[ib]+self.a1b[ib+1])
+            self.a2b[ib] = 0.5 * (self.a1b[ib] + self.a1b[ib + 1])
         for il in range(self.n_l):
-            self.a2l[il] = 0.5*(self.a1l[il]+self.a1l[il+1])
+            self.a2l[il] = 0.5 * (self.a1l[il] + self.a1l[il + 1])
 
         self.m_H = np.min(self.a1h)
         self.M_H = np.max(self.a1h)
@@ -214,7 +244,7 @@ class SETTING:
 
     def __initH__(self, H: csr_matrix):
         self.H = H
-        self.trH_2 = csr_matrix.trace(self.H.T*self.H)
+        self.trH_2 = csr_matrix.trace(self.H.T * self.H)
 
     def nbrock(self) -> tuple[int, int, int, int]:
         """_summary_
@@ -244,20 +274,20 @@ class SETTING:
         l2b = np.full((self.n_b), 0.0, dtype=float)
         l2l = np.full((self.n_l), 0.0, dtype=float)
         for ib in range(self.n_b):
-            l2b[ib] = self.a1b[ib+1]-self.a1b[ib]
+            l2b[ib] = self.a1b[ib + 1] - self.a1b[ib]
         for il in range(self.n_l):
-            l2l[il] = self.a1l[il+1]-self.a1l[il]
-        b2b = np.full((self.n_b+1), True, dtype=bool)
-        b2l = np.full((self.n_l+1), True, dtype=bool)
+            l2l[il] = self.a1l[il + 1] - self.a1l[il]
+        b2b = np.full((self.n_b + 1), True, dtype=bool)
+        b2l = np.full((self.n_l + 1), True, dtype=bool)
         loop = 0
         while np.sum(b2b) > N_b:
             argMIN = -1
             MIN = 100.0
             lower = 0
             upper = 1
-            while upper < self.n_b+1:
+            while upper < self.n_b + 1:
                 if b2b[upper]:
-                    dif = self.a1b[upper]-self.a1b[lower]
+                    dif = self.a1b[upper] - self.a1b[lower]
                     if dif < MIN:
                         MIN = dif
                         argMIN = upper
@@ -276,9 +306,9 @@ class SETTING:
             MIN = 100.0
             lower = 0
             upper = 1
-            while upper < self.n_l+1:
+            while upper < self.n_l + 1:
                 if b2l[upper]:
-                    dif = self.a1l[upper]-self.a1l[lower]
+                    dif = self.a1l[upper] - self.a1l[lower]
                     if dif < MIN:
                         MIN = dif
                         argMIN = upper
@@ -293,15 +323,16 @@ class SETTING:
             loop += 1
         simple_a1b = []
         simple_a1l = []
-        for ib in range(self.n_b+1):
+        for ib in range(self.n_b + 1):
             if b2b[ib]:
                 simple_a1b.append(self.a1b[ib])
-        for il in range(self.n_l+1):
+        for il in range(self.n_l + 1):
             if b2l[il]:
                 simple_a1l.append(self.a1l[il])
 
-        simprize_prob = SETTING(self.a1h, np.array(
-            simple_a1b), np.array(simple_a1l), self.cof, 0.3)
+        simprize_prob = SETTING(
+            self.a1h, np.array(simple_a1b), np.array(simple_a1l), self.cof, 0.3
+        )
         return simprize_prob
 
     def extension(self, simple, X) -> np.ndarray:
@@ -313,8 +344,8 @@ class SETTING:
                 sb = lnearst_idx(sa1b, self.a2b[jb])
                 for kl in range(self.n_l):
                     sl = lnearst_idx(sa1l, self.a2l[kl])
-                    idx = kl+jb*self.n_l+ih*self.n_b*self.n_l
-                    sidx = sl+sb*simple.n_l+sh*simple.n_b*simple.n_l
+                    idx = kl + jb * self.n_l + ih * self.n_b * self.n_l
+                    sidx = sl + sb * simple.n_l + sh * simple.n_b * simple.n_l
                     X_0[idx] = X[sidx]
 
         return X_0
@@ -333,6 +364,7 @@ class INPUT:
         self.rec = rec
         self.n_obs = self.tec.shape[0]
 
+
 # # # # # # # # # # # # # # # # # # # #
 
 # # Import observation File # # # # # #
@@ -345,7 +377,8 @@ def ImportDataFromTomoI(exp: EXPERIMENT) -> INPUT:
     ep = exp.ep
 
     Tomography_input = "{dr}/tomoi/{c}/{y:04d}/{d:03d}/{code}/{ep:04d}.tomoi".format(
-        dr=drive, c=country, y=year4, d=day, code="_______________", ep=ep)
+        dr=drive, c=country, y=year4, d=day, code="_______________", ep=ep
+    )
 
     data = []
     recs = []
@@ -358,22 +391,30 @@ def ImportDataFromTomoI(exp: EXPERIMENT) -> INPUT:
                 break
             else:
                 data.append(float(line.split()[0]))
-                sat = XYZ(float(line.split()[1]), float(
-                    line.split()[2]), float(line.split()[3]))
+                sat = XYZ(
+                    float(line.split()[1]),
+                    float(line.split()[2]),
+                    float(line.split()[3]),
+                )
                 sats.append(sat)
-                rec = XYZ(float(line.split()[4]), float(
-                    line.split()[5]), float(line.split()[6]))
+                rec = XYZ(
+                    float(line.split()[4]),
+                    float(line.split()[5]),
+                    float(line.split()[6]),
+                )
                 recs.append(rec)
 
     return INPUT(np.array(data, dtype=float), sats, recs)
+
 
 # # # # # # # # # # # # # # # # # # # #
 
 # # Calculation C # # # # # # # # # # #
 
 
-def Generate_C(exp: EXPERIMENT, Input: INPUT, setting: SETTING, write=True) -> csr_matrix:
-
+def Generate_C(
+    exp: EXPERIMENT, Input: INPUT, setting: SETTING, write=True
+) -> csr_matrix:
     country = exp.c
     year4 = exp.y
     day = exp.d
@@ -390,24 +431,26 @@ def Generate_C(exp: EXPERIMENT, Input: INPUT, setting: SETTING, write=True) -> c
 
     os.makedirs(
         "{dr}/tomoc/{c}/{y:04d}/{d:03d}/{code}".format(
-            dr=drive, c=country, y=year4, d=day, code=code), exist_ok=True)
+            dr=drive, c=country, y=year4, d=day, code=code
+        ),
+        exist_ok=True,
+    )
     Tomography_C = "{dr}/tomoc/{c}/{y:04d}/{d:03d}/{code}/{epc:04d}.tomoc".format(
-        dr=drive, c=country, y=year4, d=day, code=code, epc=ep)
+        dr=drive, c=country, y=year4, d=day, code=code, epc=ep
+    )
 
     A = lil_matrix((n_obs, n_all))
     if write:
         with open(Tomography_C, "w") as f:
             print(n_obs, n_all, file=f)
             for iobs in tqdm(range(n_obs)):
-                A_idx, A_data = Generate_C_row(
-                    lsat[iobs], lrec[iobs], setting)
+                A_idx, A_data = Generate_C_row(lsat[iobs], lrec[iobs], setting)
                 for jidx in range(len(A_idx)):
                     A[iobs, A_idx[jidx]] = A_data[jidx]
                     print(iobs, A_idx[jidx], A_data[jidx], file=f)
     else:
         for iobs in tqdm(range(n_obs)):
-            A_idx, A_data = Generate_C_row(
-                lsat[iobs], lrec[iobs], setting)
+            A_idx, A_data = Generate_C_row(lsat[iobs], lrec[iobs], setting)
             for jidx in range(len(A_idx)):
                 A[iobs, A_idx[jidx]] = A_data[jidx]
 
@@ -416,26 +459,30 @@ def Generate_C(exp: EXPERIMENT, Input: INPUT, setting: SETTING, write=True) -> c
 
 # return IRI value at hgt[km] -> TECU/km
 
+
 def inner(x1: XYZ, x2: XYZ) -> float:
     ans = 0.0
-    ans += x1.x*x2.x
-    ans += x1.y*x2.y
-    ans += x1.z*x2.z
+    ans += x1.x * x2.x
+    ans += x1.y * x2.y
+    ans += x1.z * x2.z
     return ans
+
 
 # return zenith theta[rad]
 
 
 def zenith(rec: XYZ, sat: XYZ, H: float):
     t, ipp = spH(rec, sat, H)
-    cosZ = inner(ipp-rec, ipp)/math.sqrt(inner(ipp, ipp)
-                                         * inner(ipp-rec, ipp-rec))
+    cosZ = inner(ipp - rec, ipp) / math.sqrt(
+        inner(ipp, ipp) * inner(ipp - rec, ipp - rec)
+    )
     return math.acos(cosZ)
 
 
 # H ... Reference Altitude [km]
 # m_B-M_B , m_L-M_L ... Tomography Range
 # nb,nl ... number of Reference points
+
 
 def Import_iri2016(day, H, m_B, M_B, m_L, M_L, nb, nl):
     _b = np.linspace(m_B, M_B, nb)
@@ -446,37 +493,37 @@ def Import_iri2016(day, H, m_B, M_B, m_L, M_L, nb, nl):
 
     for ib in range(nb):
         for jl in range(nl):
-            ans[ib, jl] = iri2016.IRI(
-                day, [H, H, 1], bs[ib, jl], ls[ib, jl]).ne[0]*1.0e+3
+            ans[ib, jl] = (
+                iri2016.IRI(day, [H, H, 1], bs[ib, jl], ls[ib, jl]).ne[0] * 1.0e3
+            )
     return ans
 
 
 def _interpolate(ans, m_B, M_B, m_L, M_L, nb, nl, lat, lon):
-    db = (M_B-m_B)/(nb-1)
-    dl = (M_L-m_L)/(nl-1)
-    i_b = math.floor((lat-m_B)/db)
-    i_l = math.floor((lon-m_L)/dl)
-    bef_b = m_B+db*i_b
-    aft_b = m_B+db*(i_b+1)
-    bef_l = m_L+dl*i_l
-    aft_l = m_L+dl*(i_l+1)
+    db = (M_B - m_B) / (nb - 1)
+    dl = (M_L - m_L) / (nl - 1)
+    i_b = math.floor((lat - m_B) / db)
+    i_l = math.floor((lon - m_L) / dl)
+    bef_b = m_B + db * i_b
+    aft_b = m_B + db * (i_b + 1)
+    bef_l = m_L + dl * i_l
+    aft_l = m_L + dl * (i_l + 1)
     Ne = 0.0
-    Ne += ((lat-bef_b)/db)*((lon-bef_l)/dl)*ans[i_b, i_l]
-    Ne += ((lat-bef_b)/db)*((aft_l-lon)/dl)*ans[i_b, i_l+1]
-    Ne += ((aft_b-lat)/db)*((lon-bef_l)/dl)*ans[i_b+1, i_l]
-    Ne += ((aft_b-lat)/db)*((aft_l-lon)/dl)*ans[i_b+1, i_l+1]
+    Ne += ((lat - bef_b) / db) * ((lon - bef_l) / dl) * ans[i_b, i_l]
+    Ne += ((lat - bef_b) / db) * ((aft_l - lon) / dl) * ans[i_b, i_l + 1]
+    Ne += ((aft_b - lat) / db) * ((lon - bef_l) / dl) * ans[i_b + 1, i_l]
+    Ne += ((aft_b - lat) / db) * ((aft_l - lon) / dl) * ans[i_b + 1, i_l + 1]
     return Ne
 
 
 def Del_Plasmaphic(exp: EXPERIMENT, Input: INPUT, setting: SETTING):
-
     year4 = exp.y
     doy = exp.d
     epoch = exp.ep
 
-    UT = epoch/120.0
-    tmp = datetime.datetime(year=year4, month=1, day=1)+datetime.timedelta(
-        days=doy-1, hours=UT
+    UT = epoch / 120.0
+    tmp = datetime.datetime(year=year4, month=1, day=1) + datetime.timedelta(
+        days=doy - 1, hours=UT
     )
     year = tmp.year
     month = tmp.month
@@ -500,12 +547,18 @@ def Del_Plasmaphic(exp: EXPERIMENT, Input: INPUT, setting: SETTING):
     _dIRI = Import_iri2016(day, M_H, m_B, M_B, m_L, M_L, nb, nl)
 
     tecs_copy = tecs.copy()
-    scale = 1.0e+3
+    scale = 1.0e3
     for iobs in range(n_obs):
         theta = zenith(recs[iobs], sats[iobs], M_H)
         t, IPP = spH(recs[iobs], sats[iobs], M_H)
-        dtec = _interpolate(_dIRI, m_B, M_B, m_L, M_L, nb,
-                            nl, IPP.to_BLH().b, IPP.to_BLH().l)*scale/1.0e+16*abs(math.cos(theta))
+        dtec = (
+            _interpolate(
+                _dIRI, m_B, M_B, m_L, M_L, nb, nl, IPP.to_BLH().b, IPP.to_BLH().l
+            )
+            * scale
+            / 1.0e16
+            * abs(math.cos(theta))
+        )
         tecs_copy[iobs] -= dtec
     return tecs_copy
 
@@ -516,33 +569,41 @@ def Del_Plasmaphic(exp: EXPERIMENT, Input: INPUT, setting: SETTING):
 #
 
 
-def Generate_C_row(sat, rec, setting: SETTING):
-
+def Generate_C_row(sat: XYZ, rec: XYZ, setting: SETTING):
     n_all, n_h, n_b, n_l = setting.nbrock()
     a1h, a1b, a1l = setting.plains()
 
     M_H = setting.M_H
 
+    sat_blh = sat.to_BLH()
+    rec_blh = rec.to_BLH()
+    
+    s_H = sat_blh.h
+    s_B = sat_blh.b
+    r_H = rec_blh.h
+    r_B = rec_blh.b
+    
+    
     cp = {}
     C_idx = []
     C_data = []
 
-    tsat, tmpsat = spH(rec, sat, M_H, False)
-    for ib in range(n_b+1):
-        tipp, ipp = spB(rec, tmpsat, a1b[ib], False)
-        if abs(ipp.to_BLH().b-a1b[ib]) > 0.1:
+    tsat, tmpsat = spH(rec, sat, M_H, False,t=(M_H-r_H)/(s_H-r_H))
+    for ib in range(n_b + 1):
+        tipp, ipp = spB(rec, tmpsat, a1b[ib], False,t=(a1b[ib]-r_B)/(s_B-r_B))
+        if abs(ipp.to_BLH().b - a1b[ib]) > 0.1:
             pass
         else:
-            cp[tipp*tsat] = ipp
-    for il in range(n_l+1):
+            cp[tipp * tsat] = ipp
+    for il in range(n_l + 1):
         tipp, ipp = spL(rec, sat, a1l[il])
-        if abs(ipp.to_BLH().l-a1l[il]) > 0.1:
+        if abs(ipp.to_BLH().l - a1l[il]) > 0.1:
             pass
         else:
             cp[tipp] = ipp
-    for ih in range(n_h+1):
-        tipp, ipp = spH(rec, sat, a1h[ih], False)
-        if abs(ipp.to_BLH().h-a1h[ih]) > 1.0:
+    for ih in range(n_h + 1):
+        tipp, ipp = spH(rec, sat, a1h[ih], False,t=(a1h[ih]-r_H)/(s_H-r_H))
+        if abs(ipp.to_BLH().h - a1h[ih]) > 1.0:
             pass
         else:
             cp[tipp] = ipp
@@ -551,23 +612,23 @@ def Generate_C_row(sat, rec, setting: SETTING):
     list_key = []
     for key in cp_sort:
         list_key.append(key[0])
-    for i in range(len(list_key)-1):
+    for i in range(len(list_key) - 1):
         bkey = list_key[i]
-        akey = list_key[i+1]
+        akey = list_key[i + 1]
         if bkey > 1.005 or akey < -0.005:
             pass
         else:
             bpos: XYZ = cp[bkey]  # XYZ
             apos: XYZ = cp[akey]  # XYZ
-            mpos = bpos*0.5+apos*0.5
+            mpos = bpos * 0.5 + apos * 0.5
             mpos_blh = mpos.to_BLH()
             bidx = lnearst_idx(a1b, mpos_blh.b)
             lidx = lnearst_idx(a1l, mpos_blh.l)
             hidx = lnearst_idx(a1h, mpos_blh.h)
             if -1 < bidx < n_b and -1 < lidx < n_l and -1 < hidx < n_h:
-                idx = lidx+bidx*n_l+hidx*n_b*n_l
+                idx = lidx + bidx * n_l + hidx * n_b * n_l
                 C_idx.append(idx)
-                C_data.append((bpos-apos).L2())
+                C_data.append((bpos - apos).L2())
 
     return C_idx, C_data  # , b_ipp, a_ipp
 
@@ -582,14 +643,19 @@ def Generate_C_row(sat, rec, setting: SETTING):
 # at rec ... t = 0.0
 # at sat ... t = 1.0
 
+
 def spH(rec: XYZ, sat: XYZ, H, debug_mode=False, t=1.0) -> tuple[float, XYZ]:
     if debug_mode:
         print(1, rec.to_BLH(), sat.to_BLH())
     eps = 0.01  # [km]
     dt = 0.01
     dt_inv = 100.0
-    point = XYZ(rec.x*(1-t)+sat.x*t, rec.y*(1-t)+sat.y*t, rec.z*(1-t)+sat.z*t)
-    if abs(point.to_BLH().h-H) < eps:
+    point = XYZ(
+        rec.x * (1 - t) + sat.x * t,
+        rec.y * (1 - t) + sat.y * t,
+        rec.z * (1 - t) + sat.z * t,
+    )
+    if abs(point.to_BLH().h - H) < eps:
         if t < 0.0:
             return -1.0, rec
         elif t > 1.0:
@@ -597,23 +663,30 @@ def spH(rec: XYZ, sat: XYZ, H, debug_mode=False, t=1.0) -> tuple[float, XYZ]:
         else:
             return t, point
     else:
-        dpoint = XYZ(rec.x*(1-t-dt)+sat.x*(t+dt), rec.y*(1-t-dt) +
-                     sat.y*(t+dt), rec.z*(1-t-dt)+sat.z*(t+dt))
-        fbar_i = (dpoint.to_BLH().h-point.to_BLH().h)*dt_inv
-        tbar = t-(point.to_BLH().h-H)/fbar_i
+        dpoint = XYZ(
+            rec.x * (1 - t - dt) + sat.x * (t + dt),
+            rec.y * (1 - t - dt) + sat.y * (t + dt),
+            rec.z * (1 - t - dt) + sat.z * (t + dt),
+        )
+        fbar_i = (dpoint.to_BLH().h - point.to_BLH().h) * dt_inv
+        tbar = t - (point.to_BLH().h - H) / fbar_i
         return spH(rec, sat, H, debug_mode, tbar)
 
 
 def spB(rec: XYZ, sat: XYZ, B, debug_mode=False, t=1.0) -> tuple[float, XYZ]:
     if debug_mode:
-        print(2, t, B, (rec*(1-t)+sat*t).to_BLH())
+        print(2, t, B, (rec * (1 - t) + sat * t).to_BLH())
     # 1.0e-5[deg]=1[km]
     eps = 4.0e-5
     dt = 0.00001
-    point = XYZ(rec.x*(1-t)+sat.x*t, rec.y*(1-t)+sat.y*t, rec.z*(1-t)+sat.z*t)
+    point = XYZ(
+        rec.x * (1 - t) + sat.x * t,
+        rec.y * (1 - t) + sat.y * t,
+        rec.z * (1 - t) + sat.z * t,
+    )
     if t < 0.0 or t > 1.0:
         return -1.0, rec
-    if abs(point.to_BLH().b-B) < eps:
+    if abs(point.to_BLH().b - B) < eps:
         if t < 0.0:
             return -1.0, rec
         elif t > 1.0:
@@ -621,21 +694,25 @@ def spB(rec: XYZ, sat: XYZ, B, debug_mode=False, t=1.0) -> tuple[float, XYZ]:
         else:
             return t, point
     else:
-        dpoint = XYZ(rec.x*(1-t-dt)+sat.x*(t+dt), rec.y*(1-t-dt) +
-                     sat.y*(t+dt), rec.z*(1-t-dt)+sat.z*(t+dt))
-        fbar_i = (dpoint.to_BLH().b-point.to_BLH().b)/dt
-        tbar = t-(point.to_BLH().b-B)/fbar_i
+        dpoint = XYZ(
+            rec.x * (1 - t - dt) + sat.x * (t + dt),
+            rec.y * (1 - t - dt) + sat.y * (t + dt),
+            rec.z * (1 - t - dt) + sat.z * (t + dt),
+        )
+        fbar_i = (dpoint.to_BLH().b - point.to_BLH().b) / dt
+        tbar = t - (point.to_BLH().b - B) / fbar_i
         return spB(rec, sat, B, debug_mode, tbar)
 
 
 def spL(rec: XYZ, sat: XYZ, L) -> tuple[float, XYZ]:
     tanL = math.tan(math.radians(L))
-    s = (sat.y-sat.x*tanL)/((rec.x-sat.x)*tanL-rec.y+sat.y)
+    s = (sat.y - sat.x * tanL) / ((rec.x - sat.x) * tanL - rec.y + sat.y)
     ans = XYZ(0.0, 0.0, 0.0)
-    ans.x = s*rec.x+(1-s)*sat.x
-    ans.y = s*rec.y+(1-s)*sat.y
-    ans.z = s*rec.z+(1-s)*sat.z
-    return 1.0-s, ans
+    ans.x = s * rec.x + (1 - s) * sat.x
+    ans.y = s * rec.y + (1 - s) * sat.y
+    ans.z = s * rec.z + (1 - s) * sat.z
+    return 1.0 - s, ans
+
 
 # # # # # # # # # # # # # # # # # # # #
 
@@ -671,47 +748,46 @@ def Generate_H(setting: SETTING) -> csr_matrix:
     for ih in range(n_h):
         for jb in range(n_b):
             for kl in range(n_l):
-                idx = kl+jb*n_l+ih*n_l*n_b
+                idx = kl + jb * n_l + ih * n_l * n_b
                 coeff_sum = 0.0
                 # west
                 if kl != 0:
-                    idx1 = kl-1+jb*n_l+ih*n_l*n_b
-                    H[idx, idx1] = coeff(a2h[ih])*-1.0*alpha
+                    idx1 = kl - 1 + jb * n_l + ih * n_l * n_b
+                    H[idx, idx1] = coeff(a2h[ih]) * -1.0 * alpha
                     coeff_sum -= H[idx, idx1]
                 # east
-                if kl != n_l-1:
-                    idx2 = kl+1+jb*n_l+ih*n_l*n_b
-                    H[idx, idx2] = coeff(a2h[ih])*-1.0*alpha
+                if kl != n_l - 1:
+                    idx2 = kl + 1 + jb * n_l + ih * n_l * n_b
+                    H[idx, idx2] = coeff(a2h[ih]) * -1.0 * alpha
                     coeff_sum -= H[idx, idx2]
                 # south
                 if jb != 0:
-                    idx3 = kl+(jb-1)*n_l+ih*n_l*n_b
-                    H[idx, idx3] = coeff(a2h[ih])*-1.0*alpha
+                    idx3 = kl + (jb - 1) * n_l + ih * n_l * n_b
+                    H[idx, idx3] = coeff(a2h[ih]) * -1.0 * alpha
                     coeff_sum -= H[idx, idx3]
                 # north
-                if jb != n_b-1:
-                    idx4 = kl+(jb+1)*n_l+ih*n_l*n_b
-                    H[idx, idx4] = coeff(a2h[ih])*-1.0*alpha
+                if jb != n_b - 1:
+                    idx4 = kl + (jb + 1) * n_l + ih * n_l * n_b
+                    H[idx, idx4] = coeff(a2h[ih]) * -1.0 * alpha
                     coeff_sum -= H[idx, idx4]
                 # below
                 if ih != 0:
-                    idx5 = kl+jb*n_l+(ih-1)*n_l*n_b
-                    H[idx, idx5] = coeff(a2h[ih-1])*-1.0
+                    idx5 = kl + jb * n_l + (ih - 1) * n_l * n_b
+                    H[idx, idx5] = coeff(a2h[ih - 1]) * -1.0
                     coeff_sum -= H[idx, idx5]
                 # above
-                if ih < n_h-1:
-                    idx6 = kl+jb*n_l+(ih+1)*n_l*n_b
-                    H[idx, idx6] = coeff(a2h[ih+1])*-1.0
+                if ih < n_h - 1:
+                    idx6 = kl + jb * n_l + (ih + 1) * n_l * n_b
+                    H[idx, idx6] = coeff(a2h[ih + 1]) * -1.0
                     coeff_sum -= H[idx, idx6]
-                if ih == 0 or ih == n_h-1:
-                    H[idx, idx] = coeff_sum+coeff(a2h[ih])*1.0
+                if ih == 0 or ih == n_h - 1:
+                    H[idx, idx] = coeff_sum + coeff(a2h[ih]) * 1.0
                 else:
                     H[idx, idx] = coeff_sum
     return H.tocsr()
 
 
 def Generate_Y(exp: EXPERIMENT, setting: SETTING):
-
     n_all, n_h, n_b, n_l = setting.nbrock()
     a1h, a1b, a1l = setting.plains()
     a2h, a2b, a2l = setting.centers()
@@ -722,9 +798,9 @@ def Generate_Y(exp: EXPERIMENT, setting: SETTING):
     epoch = exp.ep
 
     Y = np.full((n_all, 1), 0.0, dtype=float)
-    UT = epoch/120.0
-    tmp = datetime.datetime(year=year4, month=1, day=1)+datetime.timedelta(
-        days=doy-1, hours=UT
+    UT = epoch / 120.0
+    tmp = datetime.datetime(year=year4, month=1, day=1) + datetime.timedelta(
+        days=doy - 1, hours=UT
     )
     year = tmp.year
     month = tmp.month
@@ -740,9 +816,11 @@ def Generate_Y(exp: EXPERIMENT, setting: SETTING):
     _dIRI = Import_iri2016(sday, M_H, m_B, M_B, m_L, M_L, nb, nl)
     for jb in range(n_b):
         for kl in range(n_l):
-            idx1 = kl+jb*n_l+(n_h-1)*n_l*n_b
-            Y[idx1, 0] = _interpolate(_dIRI, m_B, M_B, m_L,
-                                      M_L, nb, nl, a2b[jb], a2l[kl])/1.0e+16
+            idx1 = kl + jb * n_l + (n_h - 1) * n_l * n_b
+            Y[idx1, 0] = (
+                _interpolate(_dIRI, m_B, M_B, m_L, M_L, nb, nl, a2b[jb], a2l[kl])
+                / 1.0e16
+            )
     return Y
 
 
@@ -751,14 +829,28 @@ def Generate_Y(exp: EXPERIMENT, setting: SETTING):
 # # Tomography # # # # # # # # # # # # #
 
 
-def Tomography(A: csr_matrix, B: np.ndarray, H: csr_matrix, Y: np.ndarray, co: float, x_0: np.ndarray, First: bool) -> np.ndarray:
+def Tomography(
+    A: csr_matrix,
+    B: np.ndarray,
+    H: csr_matrix,
+    Y: np.ndarray,
+    co: float,
+    x_0: np.ndarray,
+    First: bool,
+) -> np.ndarray:
     if First:
-        X = spsolve(A.T*A+co*co*H.T*H, A.T*B+co*co*H.T*Y)
+        X = spsolve(A.T * A + co * co * H.T * H, A.T * B + co * co * H.T * Y)
     else:
-        X, info = bicgstab(A.T*A+co*co*H.T*H, A.T*B+co*co *
-                           H.T*Y, x0=x_0, tol=1.0e-7, maxiter=5000)
+        X, info = bicgstab(
+            A.T * A + co * co * H.T * H,
+            A.T * B + co * co * H.T * Y,
+            x0=x_0,
+            tol=1.0e-7,
+            maxiter=5000,
+        )
 
     return X
+
 
 # # # # # # # # # # # # # # # # # # # #
 
@@ -766,15 +858,17 @@ def Tomography(A: csr_matrix, B: np.ndarray, H: csr_matrix, Y: np.ndarray, co: f
 
 
 def Write_B(B, exp: EXPERIMENT):
-
     country = exp.c
     year4 = exp.y
     day = exp.d
     ep = exp.ep
 
-    os.makedirs("{dr}/tomob/{c}/{y:04d}/{d:03d}/{code}".format(
-        dr=drive, c=country, y=year4, d=day, ep=ep, code="_______________"
-    ), exist_ok=True)
+    os.makedirs(
+        "{dr}/tomob/{c}/{y:04d}/{d:03d}/{code}".format(
+            dr=drive, c=country, y=year4, d=day, ep=ep, code="_______________"
+        ),
+        exist_ok=True,
+    )
     tomob = "{dr}/tomob/{c}/{y:04d}/{d:03d}/{code}/{ep:04d}.tomob".format(
         dr=drive, c=country, y=year4, d=day, ep=ep, code="_______________"
     )
@@ -790,11 +884,11 @@ def OutPut(X, op_file, epoch, setting: SETTING):
     a1h, a1b, a1l = setting.plains()
 
     # print(X.shape)
-    ut = epoch/120.0
+    ut = epoch / 120.0
     dut = datetime.timedelta(hours=ut)
     utsec = dut.seconds
-    uth = utsec//3600
-    utm = (utsec-uth*3600)//60
+    uth = utsec // 3600
+    utm = (utsec - uth * 3600) // 60
     uts = utsec % 60
     with open(op_file, "w") as f:
         print("# Tomography Result", file=f)
@@ -810,13 +904,13 @@ def OutPut(X, op_file, epoch, setting: SETTING):
         print("# ", file=f)
         print("# *** Plain List ***", file=f)
         print("# Latitude", file=f)
-        for ib in range(n_b+1):
+        for ib in range(n_b + 1):
             print("# {b:+06.2f}".format(b=a1b[ib]), file=f)
         print("# Longitude", file=f)
-        for il in range(n_l+1):
+        for il in range(n_l + 1):
             print("# {l:+06.2f}".format(l=a1l[il]), file=f)
         print("# Height", file=f)
-        for ih in range(n_h+1):
+        for ih in range(n_h + 1):
             print("# {h:+07.2f}".format(h=a1h[ih]), file=f)
         print("# ", file=f)
         print("# END OF HEADER", file=f)
@@ -826,12 +920,16 @@ def OutPut(X, op_file, epoch, setting: SETTING):
                 for kl in range(n_l):
                     if True:
                         f.write(
-                            "{teq:+15.13f} ".format(teq=X[kl+jb*n_l+ih*n_l*n_b]))
+                            "{teq:+15.13f} ".format(
+                                teq=X[kl + jb * n_l + ih * n_l * n_b]
+                            )
+                        )
                     # else:
                     #     f.write(
                     #         "{teq:+15.13f} ".format(teq=np.nan))
                 print("", file=f)
             print("", file=f)
+
 
 # # # # # # # # # # # # # # # # # # # #
 
@@ -913,21 +1011,21 @@ def Read_X(exp: EXPERIMENT) -> np.ndarray:
                 line = f.readline()
                 n_h = int(line.split()[3])
 
-        n_all = n_b*n_l*n_h
+        n_all = n_b * n_l * n_h
         datas = np.full((n_all, 1), 0.0, dtype=float)
         for kh in range(n_h):
             line = f.readline()
             for jb in range(n_b):
                 line = f.readline()
                 for il in range(n_l):
-                    datas[kh*n_b*n_l+jb*n_l+il, 0] = float(line.split()[il])
+                    datas[kh * n_b * n_l + jb * n_l + il, 0] = float(line.split()[il])
     return datas
+
 
 # # # # # # # # # # # # # # # # # # # #
 
 
 def Setting_Process(exp: EXPERIMENT, setting: SETTING):
-
     Input = ImportDataFromTomoI(exp)
 
     lil_A = Generate_C(exp, Input, setting)
@@ -938,7 +1036,6 @@ def Setting_Process(exp: EXPERIMENT, setting: SETTING):
 
 
 def Solve_First_Epoch(exp: EXPERIMENT, setting: SETTING):
-
     country = exp.c
     year4 = exp.y
     day = exp.d
@@ -949,26 +1046,28 @@ def Solve_First_Epoch(exp: EXPERIMENT, setting: SETTING):
     cof = setting.cof
 
     if n_all < 30000:
-
         # Solve Original
         csr_A = Read_A(exp)
         nd_B = Read_B(exp)
         csr_H = setting.H
         nd_Y = Generate_Y(exp, setting)
 
-        co = float(csr_matrix.trace(csr_A.T*csr_A)/setting.trH_2)
+        co = float(csr_matrix.trace(csr_A.T * csr_A) / setting.trH_2)
 
-        X = Tomography(csr_A, nd_B, csr_H, nd_Y,
-                       cof*co, x_0=np.nan, First=True)
+        X = Tomography(csr_A, nd_B, csr_H, nd_Y, cof * co, x_0=np.nan, First=True)
 
-        os.makedirs("{dr}/tomo/{c}/{y:04}/{d:03}/{code}".format(
-            dr=drive, c=country, y=year4, d=day, code=code), exist_ok=True)
+        os.makedirs(
+            "{dr}/tomo/{c}/{y:04}/{d:03}/{code}".format(
+                dr=drive, c=country, y=year4, d=day, code=code
+            ),
+            exist_ok=True,
+        )
         op_file = "{dr}/tomo/{c}/{y:04}/{d:03}/{code}/{epc:04d}.tomo".format(
-            dr=drive, c=country, y=year4, d=day, code=code, epc=ep)
+            dr=drive, c=country, y=year4, d=day, code=code, epc=ep
+        )
         OutPut(X, op_file, ep, setting)
 
     else:
-
         # Solve Simprize Problem
         N_b = 35
         N_l = 35
@@ -980,11 +1079,11 @@ def Solve_First_Epoch(exp: EXPERIMENT, setting: SETTING):
         scsr_H = Generate_H(simple_setting)
         snd_Y = Generate_Y(exp, simple_setting)
 
-        sco = float(csr_matrix.trace(scsr_A.T*scsr_A) /
-                    csr_matrix.trace(scsr_H.T*scsr_H))
+        sco = float(
+            csr_matrix.trace(scsr_A.T * scsr_A) / csr_matrix.trace(scsr_H.T * scsr_H)
+        )
 
-        X = Tomography(scsr_A, snd_B, scsr_H, snd_Y,
-                       cof*sco, x_0=np.nan, First=True)
+        X = Tomography(scsr_A, snd_B, scsr_H, snd_Y, cof * sco, x_0=np.nan, First=True)
 
         X_0 = setting.extension(simple_setting, X)
 
@@ -992,20 +1091,24 @@ def Solve_First_Epoch(exp: EXPERIMENT, setting: SETTING):
         nd_B = Read_B(exp)
         csr_H = setting.H
         nd_Y = Generate_Y(exp, setting)
-        co = float(csr_matrix.trace(csr_A.T*csr_A) / setting.trH_2)
+        co = float(csr_matrix.trace(csr_A.T * csr_A) / setting.trH_2)
 
-        X = Tomography(csr_A, nd_B, csr_H, nd_Y, cof*co, x_0=X_0, First=False)
+        X = Tomography(csr_A, nd_B, csr_H, nd_Y, cof * co, x_0=X_0, First=False)
 
-        os.makedirs("{dr}/tomo/{c}/{y:04}/{d:03}/{code}".format(
-            dr=drive, c=country, y=year4, d=day, code=code), exist_ok=True)
+        os.makedirs(
+            "{dr}/tomo/{c}/{y:04}/{d:03}/{code}".format(
+                dr=drive, c=country, y=year4, d=day, code=code
+            ),
+            exist_ok=True,
+        )
         op_file = "{dr}/tomo/{c}/{y:04}/{d:03}/{code}/{epc:04d}.tomo".format(
-            dr=drive, c=country, y=year4, d=day, code=code, epc=ep)
+            dr=drive, c=country, y=year4, d=day, code=code, epc=ep
+        )
 
         OutPut(X, op_file, ep, setting)
 
 
 def Solving_Process(exp: EXPERIMENT, setting: SETTING, eps, idx):
-
     country = exp.c
     year4 = exp.y
     day = exp.d
@@ -1018,19 +1121,24 @@ def Solving_Process(exp: EXPERIMENT, setting: SETTING, eps, idx):
     nd_B = Read_B(exp)
     csr_H = setting.H
     nd_Y = Generate_Y(exp, setting)
-    co = float(csr_matrix.trace(csr_A.T*csr_A)/setting.trH_2)
+    co = float(csr_matrix.trace(csr_A.T * csr_A) / setting.trH_2)
 
-    latest = max(0, idx-3)
+    latest = max(0, idx - 3)
     exp_latest = EXPERIMENT(country, year4, day, code, eps[latest])
 
     X_0 = Read_X(exp_latest)
 
-    X = Tomography(csr_A, nd_B, csr_H, nd_Y, cof*co, X_0, First=False)
+    X = Tomography(csr_A, nd_B, csr_H, nd_Y, cof * co, X_0, First=False)
 
-    os.makedirs("{dr}/tomo/{c}/{y:04}/{d:03}/{code}".format(
-        dr=drive, c=country, y=year4, d=day, code=code), exist_ok=True)
+    os.makedirs(
+        "{dr}/tomo/{c}/{y:04}/{d:03}/{code}".format(
+            dr=drive, c=country, y=year4, d=day, code=code
+        ),
+        exist_ok=True,
+    )
     op_file = "{dr}/tomo/{c}/{y:04}/{d:03}/{code}/{epc:04d}.tomo".format(
-        dr=drive, c=country, y=year4, d=day, code=code, epc=ep)
+        dr=drive, c=country, y=year4, d=day, code=code, epc=ep
+    )
     OutPut(X, op_file, ep, setting)
 
     print(exp, "end")
@@ -1040,8 +1148,16 @@ def Solving_Process(exp: EXPERIMENT, setting: SETTING, eps, idx):
 # Ax -> B
 # Hx -> Y
 
-def __Tomography__(country: str, year4: int, day: int, CODE: str, eps: np.ndarray, setting: SETTING, M_w: int):
 
+def __Tomography__(
+    country: str,
+    year4: int,
+    day: int,
+    CODE: str,
+    eps: np.ndarray,
+    setting: SETTING,
+    M_w: int,
+):
     print("** Start Tomography **")
     start = time.time()
 
@@ -1056,59 +1172,74 @@ def __Tomography__(country: str, year4: int, day: int, CODE: str, eps: np.ndarra
     setting.__initH__(csr_H)
 
     # 131 x 122 x 26 -> 13 sec
-    print("** Common Setting Complete **", time.time()-start)
+    print("** Common Setting Complete **", time.time() - start)
 
     with ProcessPoolExecutor(max_workers=M_w) as executor:
-        futures = [executor.submit(Setting_Process, exp, setting)
-                   for exp in exps]
+        futures = [executor.submit(Setting_Process, exp, setting) for exp in exps]
 
-    print("** Formula Setting Complete **", time.time()-start)
+    print("** Formula Setting Complete **", time.time() - start)
 
     Solve_First_Epoch(exps[0], setting)
 
-    print("** Solve First Problem **", time.time()-start)
+    print("** Solve First Problem **", time.time() - start)
 
     with ProcessPoolExecutor(max_workers=M_w) as executor:
-        futures = [executor.submit(Solving_Process, exp, setting, eps, idx)
-                   for idx, exp in enumerate(exps[1:])]
+        futures = [
+            executor.submit(Solving_Process, exp, setting, eps, idx)
+            for idx, exp in enumerate(exps[1:])
+        ]
 
-    print("** All Problem Completed**", time.time()-start)
+    print("** All Problem Completed**", time.time() - start)
 
 
 if __name__ == "__main__":
     country = "jp"
     year4 = 2016
     day = 193
-    CODE = "MSTID_1+2_05d_3_2_0_8-1"
+    CODE = "MSTID_1+2_04d_3_2_0_8-1"
     eps = np.arange(1600, 2000, 1)
     # n_h = 26
-    a1h = np.array([070.0, 100.0, 130.0, 160.0, 190.0, 220.0, 250.0, 280.0, 310.0, 340.0,
-                    370.0, 400.0, 430.0, 460.0, 490.0, 520.0, 550.0, 580.0, 610.0, 660.0,
-                    710.0, 760.0, 810.0, 860.0, 910.0, 960.0, 1010.0])
-    # n_l = 99
-    a1l = np.array([095.00, 097.50, 100.00, 102.50, 105.00, 106.00, 107.00, 108.00, 109.00,
-                    110.00, 111.00, 112.00, 113.00, 114.00, 115.00, 116.00, 117.00, 118.00, 119.00,
-                    120.00, 120.50, 121.00, 121.50, 122.00, 122.50, 123.00, 123.50, 124.00, 124.50,
-                    125.00, 125.50, 126.00, 126.50, 127.00, 127.50, 128.00, 128.50, 129.00, 129.50,
-                    130.00, 130.50, 131.00, 131.50, 132.00, 132.50, 133.00, 133.50, 134.00, 134.50,
-                    135.00, 135.50, 136.00, 136.50, 137.00, 137.50, 138.00, 138.50, 139.00, 139.50,
-                    140.00, 140.50, 141.00, 141.50, 142.00, 142.50, 143.00, 143.50, 144.00, 144.50,
-                    145.00, 145.50, 146.00, 146.50, 147.00, 147.50, 148.00, 148.50, 149.00, 149.50,
-                    150.00, 151.00, 152.00, 153.00, 154.00, 155.00, 156.00, 157.00, 158.00, 159.00,
-                    160.00, 161.00, 162.00, 163.00, 164.00, 165.00, 167.50, 170.00, 172.50, 175.00,
-                    177.50])
-    # n_b = 100
-    a1b = np.array([-5.00, -2.50, 00.00, 02.50, 05.00, 06.00, 07.00, 08.00, 09.00, 10.00,
-                    11.00, 12.00, 13.00, 14.00, 15.00, 16.00, 17.00, 18.00, 19.00, 20.00,
-                    20.50, 21.00, 21.50, 22.00, 22.50, 23.00, 23.50, 24.00, 24.50, 25.00,
-                    25.50, 26.00, 26.50, 27.00, 27.50, 28.00, 28.50, 29.00, 29.50, 30.00,
-                    30.50, 31.00, 31.50, 32.00, 32.50, 33.00, 33.50, 34.00, 34.50, 35.00,
-                    35.50, 36.00, 36.50, 37.00, 37.50, 38.00, 38.50, 39.00, 39.50, 40.00,
-                    40.50, 41.00, 41.50, 42.00, 42.50, 43.00, 43.50, 44.00, 44.50, 45.00,
-                    45.50, 46.00, 46.50, 47.00, 47.50, 48.00, 48.50, 49.00, 49.50, 50.00,
-                    51.00, 52.00, 53.00, 54.00, 55.00, 56.00, 57.00, 58.00, 59.00, 60.00,
-                    61.00, 62.00, 63.00, 64.00, 65.00, 67.50, 70.00, 72.50, 75.00, 77.50,
-                    80.00])
-    setting = SETTING(a1h=a1h, a1b=a1b, a1l=a1l, cof=1.0e+2, alpha=0.8)
+    a1h = np.array(
+        [
+            070.0, 100.0, 130.0, 160.0, 190.0, 220.0, 250.0, 280.0, 310.0, 340.0,
+            370.0, 400.0, 430.0, 460.0, 490.0, 520.0, 550.0, 580.0, 610.0, 660.0,
+            710.0, 760.0, 810.0, 860.0, 910.0, 960.0, 1010.0
+        ]
+    )
+    # n_l = 117
+    a1l = np.array(
+        [
+            095.00, 097.50, 100.00, 102.50, 105.00, 106.00, 107.00, 108.00, 109.00, 110.00,
+            111.00, 112.00, 113.00, 114.00, 115.00, 116.00, 117.00, 118.00, 119.00, 120.00,
+            120.40, 120.80, 121.20, 121.60, 122.00, 122.40, 122.80, 123.20, 123.60, 124.00,
+            124.40, 124.80, 125.20, 125.60, 126.00, 126.40, 126.80, 127.20, 127.60, 128.00,
+            128.40, 128.80, 129.20, 129.60, 130.00, 130.40, 130.80, 131.20 ,131.60, 132.00,
+            132.40, 132.80, 133.20, 133.60, 134.00, 134.40, 134.80, 135.20, 135.60, 136.00,
+            136.40, 136.80, 137.20, 137.60, 138.00, 138.40, 138.80, 139.20, 139.60, 140.00,
+            140.40, 140.80, 141.20, 141.60, 142.00, 142.40, 142.80, 143.20, 143.60, 144.00,
+            144.40, 144.80, 145.20, 145.60, 146.00, 146.40, 146.80, 147.20, 147.60, 148.00,
+            148.40, 148.80, 149.20, 149.60, 150.00, 150.40, 150.80, 151.20, 151.60, 152.00,
+            153.00, 154.00, 155.00, 156.00, 157.00, 158.00, 159.00, 160.00, 161.00, 162.00,
+            163.00, 164.00, 165.00, 167.50, 170.00, 172.50, 175.00, 177.50  
+        ]
+    )
+    # n_b = 115
+    a1b = np.array(
+        [
+            -5.00, -2.50, 00.00, 02.50, 05.00, 06.00, 07.00, 08.00, 09.00, 10.00,
+            11.00, 12.00, 13.00, 14.00, 15.00, 16.00, 17.00, 18.00, 19.00, 20.00,
+            20.40, 20.80, 21.20, 21.60, 22.00, 22.40, 22.80, 23.20, 23.60, 24.00, 
+            24.40, 24.80, 25.20, 25.60, 26.00, 26.40, 26.80, 27.20, 27.60, 28.00,
+            28.40, 28.80, 29.20, 29.60, 30.00, 30.40, 30.80, 31.20, 31.60, 32.00,
+            32.40, 32.80, 33.20, 33.60, 34.00, 34.40, 34.80, 35.20, 35.60, 36.00, 
+            36.40, 36.80, 37.20, 37.60, 38.00, 38.40, 38.80, 39.20, 39.60, 40.00,
+            40.40, 40.80, 41.20, 41.60, 42.00, 42.40, 42.80, 43.20, 43.60, 44.00,
+            44.40, 44.80, 45.20, 45.60, 46.00, 46.40, 46.80, 47.20, 47.60, 48.00, 
+            48.40, 48.80, 49.20, 49.60, 50.00, 51.00, 52.00, 53.00, 54.00, 55.00,
+            56.00, 57.00, 58.00, 59.00, 60.00, 61.00, 62.00, 63.00, 64.00, 65.00,
+            67.50, 70.00, 72.50, 75.00, 77.50, 80.00
+        ]
+    )
+    setting = SETTING(a1h=a1h, a1b=a1b, a1l=a1l, cof=1.0e2, alpha=0.8)
 
     __Tomography__(country, year4, day, CODE, eps, setting, 2)
